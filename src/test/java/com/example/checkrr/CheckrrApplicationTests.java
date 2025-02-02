@@ -8,6 +8,7 @@ class CheckrrApplicationTests {
 
 	@Test
 	void contextLoads() {
+		// Not yet started writing unit tests
 	}
 
 }

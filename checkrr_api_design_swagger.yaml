@@ -1,0 +1,733 @@
+openapi: 3.0.0
+info:
+  title: Checkrr
+  description: API endpoints for Checkrr application
+  version: 1.0.0
+servers:
+  - url: https://checkrr.zms.com
+    description: Development server
+paths:
+  /api/v1/auth/signup:
+    post:
+      summary: Register a new user and return a cookie with JWT token
+      operationId: signUpUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+      responses:
+        "201":
+          description: User registered successfully
+          headers:
+            Set-Cookie:
+              description: "JWT cookie for authentication"
+              schema:
+                type: string
+                example: "JWT=eyJhbGciOiJIUz...; Path=/; HttpOnly; Secure; SameSite=Strict"
+        "400":
+          description: Bad request
+
+  /api/v1/auth/signin:
+    post:
+      summary: Authenticate user and return a cookie with JWT token
+      operationId: signInUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+      responses:
+        "200":
+          description: Successful login
+          headers:
+            Set-Cookie:
+              description: "JWT cookie for authentication"
+              schema:
+                type: string
+                example: "JWT=eyJhbGciOiJIUz...; Path=/; HttpOnly; Secure; SameSite=Strict"
+        "401":
+          description: Unauthorized
+
+  /api/v1/auth/logout:
+    post:
+      summary: User Logout
+      operationId: Signout
+      parameters:
+        - name: JWT
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUz..."
+      responses:
+        "200":
+          description: User logged out, JWT cookie cleared
+          headers:
+            Set-Cookie:
+              description: "Clears the JWT cookie"
+              schema:
+                type: string
+                example: "JWT=; Path=/; HttpOnly; Secure; Max-Age=0"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logged out successfully"
+        "401":
+          description: Unauthorized
+
+
+  /api/v1/auth/forgot-password:
+    post:
+      summary: Send a password reset link
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        "200":
+          description: Reset link sent to email
+        "404":
+          description: "Email not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Email not found"
+
+  /api/v1//auth/reset-password:
+    post:
+      summary: Reset the password using token
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        "200":
+          description: Password reset successfully
+
+        "400":
+          description: Invalid or expired token
+
+  /api/v1/candidates-with-reports:
+    get:
+      summary: Fetch a paginated list of candidate reports with optional filtering on name, adjudication and status
+      operationId: candidateReport
+      parameters:
+        - name: JWT
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUz..."
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter candidates by name
+
+        - name: adjudication
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PRE-ADVERSE ACTION, ENGAGED]
+
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [CLEAR, CONSIDER]
+
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: "Page number (default is 1)"
+
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: "Number of records per page (default is 10)"
+
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "name,asc"
+          description: "Sort field and order (e.g., 'name,asc' or 'age,desc')"
+      responses:
+        "200":
+          description: Fetched a paginated list of candidate reports with optional filtering on name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCandidateReportResponse'
+
+
+        "400":
+          description: Invalid or expired token
+        "401":
+          description: Unauthorized
+
+
+  /api/v1/candidates-with-reports:export:
+    post:
+      summary: export a list of candidate reports within the given range of dates
+      operationId: candidateReportExport
+      parameters:
+        - name: JWT
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUz..."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateReportsExportRequest'
+
+
+      responses:
+        "200":
+          description: Download link was successfully sent to mail
+
+        "400":
+          description: From date is greater than To date
+        "401":
+          description: Unauthorized
+
+
+  /api/v1/candidates/{candidate-id}/report:
+    patch:
+      summary: modify adjudication status for given candidate id
+      operationId: candidateReportPatch
+      parameters:
+        - name: JWT
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUz..."
+        - name: candidate-id
+          in: path
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateReportAdjudicationRequest'
+
+      responses:
+        "200":
+          description: Adjudication status updated
+
+        "404":
+          description: Candidate not found
+        "401":
+          description: Unauthorized
+
+    get:
+      summary: show report details for given candidate id
+      operationId: candidateReportFetch
+      parameters:
+        - name: JWT
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUz..."
+        - name: candidate-id
+          in: path
+          required: true
+          schema:
+            type: string
+
+
+      responses:
+        "200":
+          description: Adjudication status updated
+
+        "404":
+          description: Candidate not found
+        "401":
+          description: Unauthorized
+
+
+  /api/v1/candidates/{candidate-id}:
+    get:
+      summary: Fetch general information for given candidate id
+      operationId: candidateInfo
+      parameters:
+        - name: JWT
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUz..."
+        - name: candidate-id
+          in: path
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        "200":
+          description: Fetched general information for given candidate id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateGeneralInfo'
+
+        "401":
+          description: Unauthorized
+
+        "404":
+          description: Candidate not found
+
+
+
+
+
+            #need to insert a logic where a row with adverse action details such as name, status, pre-notice-date,post-notice-date
+
+
+
+            # /api/v1/candidates/{candidate-id}/general-info:
+            #   get:
+            #     summary: Fetch general information about given candidate
+            #     operationId: candidateGeneralInfo
+            #     parameters:
+            #       - name: JWT
+            #         in: cookie
+            #         required: true
+            #         schema:
+            #           type: string
+            #           example: "eyJhbGciOiJIUz..."
+            #       - name: candidate-id
+            #         in: path
+            #         required: true
+            #         schema:
+            #           type: integer
+
+            #     responses:
+            #       "200":
+            #         description: Fetched general information about given candidate
+            #         content:
+            #           application/json:
+            #             schema:
+            #               $ref: '#/components/schemas/CandidateGeneralInfo'
+
+          #       "401":
+          #         description: Unauthorized
+
+          #       "404":
+          #         description: Candidate not found
+
+          # /api/v1/candidates/{candidate-id}/report-info:
+          #   get:
+          #     summary: Fetch report information about the given candidate
+          #     operationId: candidateReportInfo
+          #     parameters:
+          #       - name: JWT
+          #         in: cookie
+          #         required: true
+          #         schema:
+          #           type: string
+          #           example: "eyJhbGciOiJIUz..."
+          #       - name: candidate-id
+          #         in: path
+          #         required: true
+          #         schema:
+          #           type: integer
+
+          #     responses:
+          #       "200":
+          #         description: Fetched report information about the given candidate
+          #         content:
+          #           application/json:
+          #             schema:
+          #               $ref: '#/components/schemas/CandidateReportInfo'
+          #       "401":
+          #         description: Unauthorized
+
+    #       "404":
+    #         description: Candidate not found
+
+  /api/v1/candidates/{candidate-id}/court-searches:
+    get:
+      summary: Fetch court search information about the given candidate
+      operationId: candidateCourtSearchInfo
+      parameters:
+        - name: JWT
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUz..."
+        - name: candidate-id
+          in: path
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        "200":
+          description: Fetched court search information about the given candidate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateCourtSearchInfo'
+
+        "401":
+          description: Unauthorized
+
+        "404":
+          description: Candidate not found
+
+
+  /api/v1/adverse-actions:
+    get:
+      summary: Fetch a paginated list of adverse actions with optional filtering on name and status
+      operationId: adverse-actions
+      parameters:
+        - name: JWT
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUz..."
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter candidates by name
+
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDING,SCHEDULED, DISPUTE, CANCELLED, UNDELIVERABLE, COMPLETED]
+
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: "Page number (default is 1)"
+
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: "Number of records per page (default is 10)"
+
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "name,asc"
+          description: "Sort field and order (e.g., 'name,asc' or 'age,desc')"
+
+      responses:
+        "200":
+          description: Fetched a paginated list of adverse actions with optional filtering on name and sta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdverseActionsResponse'
+        "400":
+          description: No adverse-action found
+        "401":
+          description: Unauthorized
+
+
+
+components:
+  schemas:
+    CandidateReportsExportRequest:
+      type: object
+      required: [from-date,to-date]
+      properties:
+        from-date:
+          type: string
+        to-date:
+          type: string
+
+    CandidateReportAdjudicationRequest:
+      type: object
+      required: [adjudicationStatus,notice-date]
+      properties:
+        adjudicationStatus:
+          type: string
+          enum: [ADVERSE ACTION, ENGAGE]
+        notice-days:
+          type: integer
+          example: 5
+
+    CandidateInfo:
+      type: object
+      required: [id,name,email,dob,phone,zipcode,location,social_security_number,drivers_license_number,created_at,adjudication,adjudication_created_at,adjudication_completed_at,adjudication_status,package,turn_around_time,court_searches]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        dob:
+          type: string
+        phone:
+          type: string
+        zipcode:
+          type: integer
+        social_security_number:
+          type: string
+        drivers_license_number:
+          type: string
+        created_at:
+          type: string
+        adjudication:
+          type: string
+        adjudication_created_at:
+          type: string
+        adjudication_completed_at:
+          type: string
+        adjudication_status:
+          type: string
+        package:
+          type: string
+        turn_around_time:
+          type: string
+        court_searches:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Country Criminal
+              status:
+                type: string
+                enum: [CLEAR, CONSIDER]
+              date:
+                type: string
+                example: "12/01/2022"
+
+
+    CandidateGeneralInfo:
+      type: object
+      required: [name,email,dob,phone,zipcode,social_security_number,drivers_license_number,createdAt]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        dob:
+          type: string
+        phone:
+          type: string
+        zipcode:
+          type: integer
+        social_security_number:
+          type: string
+        drivers_license_number:
+          type: string
+        createdAt:
+          type: string
+
+
+    CandidateReportInfo:
+      type: object
+      required: [status,adjudication,package,createdAt,completedAt,turnAroundTime]
+      properties:
+        status:
+          type: string
+          enum: [CLEAR, CONSIDER]
+        adjudication:
+          type: string
+          enum: [ADVERSE ACTION, ENGAGE]
+        package:
+          type: string
+        createdAt:
+          type: string
+        completedAt:
+          type: string
+        turnAroundTime:
+          type: integer
+
+
+    CandidateCourtSearchInfo:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+            example: Country Criminal
+          status:
+            type: string
+            enum: [CLEAR, CONSIDER]
+          date:
+            type: string
+            example: "12/01/2022"
+
+    PaginatedCandidateReportResponse:
+      type: object
+      required: [totalRecords,totalPages,currentPage,pageSize,candidateReports]
+      properties:
+        totalRecords:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 10
+        currentPage:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 10
+        candidateReports:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 1
+              name:
+                type: string
+                example: "John Doe"
+              adjudication:
+                type: string
+                enum: [PRE-ADVERSE ACTION, ENGAGED]
+              status:
+                type: string
+                enum: [CLEAR, CONSIDER]
+              location:
+                type: string
+                example: "LONDON"
+              date:
+                type: string
+                example: "12/01/2022"
+
+    PaginatedAdverseActionsResponse:
+      type: object
+      required: [totalRecords,totalPages,currentPage,pageSize,adverseActions]
+      properties:
+        totalRecords:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 10
+        currentPage:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 10
+        adverseActions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 1
+              name:
+                type: string
+                example: "John Doe"
+              status:
+                type: string
+                enum: [CLEAR, CONSIDER]
+              pre-notice-date:
+                type: string
+                example: "12/01/2022"
+              post-notice-date:
+                type: string
+                example: "19/01/2022"
+
+    SignUpRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    SignInRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+
+
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+          format: password
+
+
+
+

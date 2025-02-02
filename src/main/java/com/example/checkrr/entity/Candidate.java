@@ -51,9 +51,9 @@ public class Candidate {
     private Report report;
 
     @OneToMany(mappedBy = "candidate")
-    List<AdverseAction> adverse_actions=new ArrayList<>();
+    List<AdverseAction> adverseActions=new ArrayList<>();
 
     @OneToMany(mappedBy = "candidate")
-    List<CourtSearch> court_searches=new ArrayList<>();
+    List<CourtSearch> courtSearches=new ArrayList<>();
 }
 
