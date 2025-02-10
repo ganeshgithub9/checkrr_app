@@ -188,5 +188,4 @@ class CandidateServiceTest {
         assert(actualResult.getName().equals(candidate.getName()));
     }
 
-
 }

@@ -4,6 +4,7 @@ import com.example.checkrr.dto.ReportDTO;
 import com.example.checkrr.entity.Candidate;
 import com.example.checkrr.projection.CandidateGeneralInfoProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface CandidateRepository extends JpaRepository<Candidate, Long> {
+public interface CandidateRepository extends JpaRepository<Candidate, Long>, JpaSpecificationExecutor<Candidate> {
 
 
      Optional<CandidateGeneralInfoProjection> findCandidateGeneralInfoById(Long candidateId);

@@ -19,4 +19,5 @@ public interface CandidateService {
     Candidate getReferenceByCandidateId(Long candidateId);
 
     Long getReportIdByCandidateId(Long candidateId) throws CandidateNotFoundException;
+
 }

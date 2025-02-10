@@ -3,9 +3,11 @@ package com.example.checkrr.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
 
 @Entity
 @Table(name = "candidate")
@@ -50,10 +52,10 @@ public class Candidate {
     @JoinColumn(name = "report_id",unique = true)
     private Report report;
 
-    @OneToMany(mappedBy = "candidate")
+    @OneToMany(mappedBy = "candidate",fetch = FetchType.LAZY)
     List<AdverseAction> adverseActions=new ArrayList<>();
 
-    @OneToMany(mappedBy = "candidate")
+    @OneToMany(mappedBy = "candidate",fetch = FetchType.LAZY)
     List<CourtSearch> courtSearches=new ArrayList<>();
 }
 

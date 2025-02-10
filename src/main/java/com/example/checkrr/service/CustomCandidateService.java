@@ -10,11 +10,12 @@ import com.example.checkrr.projection.CandidateGeneralInfoProjection;
 import com.example.checkrr.repository.CandidateRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.List;
 
 
 @Service
@@ -55,6 +56,7 @@ public class CustomCandidateService implements CandidateService{
     public Long getReportIdByCandidateId(Long candidateId) throws CandidateNotFoundException {
         return repository.findReportIdById(candidateId).orElseThrow(()->new CandidateNotFoundException("Candidate with id "+candidateId+" does not exist"));
     }
+
 
     public Candidate toCandidate(CandidateDTO request){
         return mapper.map(request, Candidate.class);
