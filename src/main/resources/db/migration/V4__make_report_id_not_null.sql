@@ -1,0 +1,1 @@
+alter table candidate modify report_id BIGINT not null;

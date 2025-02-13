@@ -46,7 +46,7 @@ public class Candidate {
     @Column(nullable = false)
     private LocalDate createdAt;
 
-    @OneToOne(cascade=CascadeType.ALL)
+    @OneToOne(cascade=CascadeType.ALL,fetch = FetchType.LAZY)
     @JoinColumn(name = "report_id",unique = true)
     private Report report;
 

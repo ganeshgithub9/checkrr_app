@@ -18,7 +18,7 @@ public class CourtSearch {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "candidate_id",nullable = false)
     private Candidate candidate;
 

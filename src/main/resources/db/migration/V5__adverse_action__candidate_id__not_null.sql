@@ -1,0 +1,1 @@
+alter table adverse_action modify column candidate_id bigint not null;
