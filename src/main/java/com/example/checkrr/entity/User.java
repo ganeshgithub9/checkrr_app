@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,5 +28,8 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @OneToMany(mappedBy = "createdBy")
+    private List<AdverseAction> adverseActionsCreated;
 }
 

@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "adverse_action")
@@ -30,5 +32,26 @@ public class AdverseAction {
 
     @Enumerated(EnumType.STRING)
     private AdverseActionStatus status;
+
+    private String mailSubject;
+
+    private String mailContentInHtml;
+
+    @ManyToOne
+    @JoinColumn(name = "created_by_user_id")
+    private User createdBy;
+
+    @ElementCollection
+    @CollectionTable(name="attachment",joinColumns = @JoinColumn(name = "adverse_action_id"))
+    @Column(name = "attachment_url")
+    List<String> attachments=new ArrayList<>();
+
+    public AdverseAction(Long id,LocalDate preNoticeDate,LocalDate postNoticeDate,Candidate candidate,AdverseActionStatus status){
+        this.id=id;
+        this.preNoticeDate=preNoticeDate;
+        this.postNoticeDate=postNoticeDate;
+        this.candidate=candidate;
+        this.status=status;
+    }
 }
 

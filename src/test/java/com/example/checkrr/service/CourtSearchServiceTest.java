@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -133,6 +134,15 @@ class CourtSearchServiceTest {
         assertEquals(courtSearchProjections.size(),actualResult.size());
         assert(courtSearchProjections.equals(actualResult));
         assert(!courtSearchProjections1.equals(actualResult));
+
+    }
+
+    @Test
+    void givenInvalidCandidateId_WhenGetCourtSearchDetailsByCandidateId_ThenThrowsCourtSearchNotFoundException() {
+
+        when(courtSearchRepository.getCourtSearchDetailsByCandidateId(anyLong())).thenReturn(Optional.empty());
+
+       assertThrows(CourtSearchNotFoundException.class,()->courtSearchService.getCourtSearchDetailsByCandidateId(3L));
 
     }
 }

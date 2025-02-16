@@ -3,13 +3,18 @@ package com.example.checkrr.service;
 import com.example.checkrr.dto.AdjudicationUpdationDTO;
 import com.example.checkrr.dto.AdverseActionDTO;
 import com.example.checkrr.dto.AdverseActionResponseDTO;
+import com.example.checkrr.dto.EmailMetaData;
 import com.example.checkrr.entity.AdverseAction;
 import com.example.checkrr.entity.Candidate;
+import com.example.checkrr.entity.User;
 import com.example.checkrr.enums.Adjudication;
 import com.example.checkrr.enums.AdverseActionStatus;
 import com.example.checkrr.enums.Status;
 import com.example.checkrr.exceptions.CandidateNotFoundException;
+import com.example.checkrr.exceptions.FileUploadFailedException;
+import com.example.checkrr.exceptions.UserNotFoundException;
 import com.example.checkrr.repository.AdverseActionRepository;
+import com.example.checkrr.util.AttachmentUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -27,12 +32,16 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -45,6 +54,12 @@ class AdverseActionServiceTest {
 
     @Mock
     CustomReportService reportService;
+
+    @Mock
+    CustomUserService userService;
+
+    @Mock
+    AttachmentUtil attachmentUtil;
 
     @Mock
     AdverseActionRepository adverseActionRepository;
@@ -70,6 +85,8 @@ class AdverseActionServiceTest {
     private ModelMapper modelMapper=new ModelMapper();
 
     ObjectMapper objectMapper;
+
+    User user;
 
     @BeforeEach
     void setup(){
@@ -111,6 +128,7 @@ class AdverseActionServiceTest {
         objectMapper=new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
+        user=new User(3L,"jack","xyz@abc.com","@#45~@qa",null);
 
     }
 
@@ -153,5 +171,48 @@ class AdverseActionServiceTest {
 
     }
 
+    @Test
+    void givenCandidateIdAndAdverseActionDTOAndEmailMetaDataAndMultipartFiles_WhenCreateAdverseActionWithMailAndAttachments_ThenReturnsSuccessResponse() throws CandidateNotFoundException, FileUploadFailedException, UserNotFoundException {
+
+        List<String> urlsList=List.of("/home/ganeb/uploads/checkrr/2__test1.txt","/home/ganeb/uploads/checkrr/2__test2.txt");
+        MultipartFile file1 = new MockMultipartFile("files", "test1.txt", "text/plain", "Dummy file content 1".getBytes(StandardCharsets.UTF_8));
+        MultipartFile file2 = new MockMultipartFile("files", "test2.txt", "text/plain", "Dummy file content 2".getBytes(StandardCharsets.UTF_8));
+        MultipartFile[] files=new MultipartFile[]{file1,file2};
+
+        EmailMetaData emailMetaData=new EmailMetaData(3L,2L,"Pre-adverse action notice","<!DOCTYPE html><html lang=\\\"en\\\"><head><meta charset=\\\"UTF-8\\\"><meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1.0\\\"><title>Pre Adverse Action Notice</title><style>body{font-family:Arial,sans-serif;margin:40px;line-height:1.6;}.container{max-width:600px;padding:20px;border:1px solid #ccc;border-radius:8px;}.checkbox-group{margin:20px 0;}</style></head><body><div class=\\\"container\\\"><p>Dear Jay,</p><p>You recently authorized checkr-bpo (\\\"the company\\\") to obtain consumer reports and/or investigate consumer reports about you from a consumer reporting agency. The Company is considering taking action in whole or in part based on information in such report(s) including the following specific items identified in the report prepared by Checkr, Inc.</p><h3>Select The Charges For The Pre Adverse Action</h3><div class=\\\"checkbox-group\\\"><input type=\\\"checkbox\\\" id=\\\"charge1\\\"><label for=\\\"charge1\\\">Driving while license suspended</label><br><input type=\\\"checkbox\\\" id=\\\"charge2\\\"><label for=\\\"charge2\\\">Assault Domestic Violence</label><br><input type=\\\"checkbox\\\" id=\\\"charge3\\\"><label for=\\\"charge3\\\">Unable to verify employment history at Dunder Mifflin</label></div>");
+
+
+        when(candidateService.getReportIdByCandidateId(anyLong())).thenReturn(2L);
+        when(candidateService.getReferenceByCandidateId(anyLong())).thenReturn(candidate);
+        when(userService.getUserReferenceById(anyLong())).thenReturn(user);
+        when(attachmentUtil.storeAttachmentAndGetURLs(any(MultipartFile[].class),anyLong())).thenReturn(urlsList);
+        when(adverseActionRepository.save(any(AdverseAction.class))).thenReturn(adverseAction);
+        when(reportService.updateAdjudicationDetails(any(AdjudicationUpdationDTO.class))).thenReturn(1);
+
+        String actualResult= adverseActionService.createAdverseActionWithMailAndAttachments(3L,adverseActionDTO,emailMetaData,files);
+
+        verify(adverseActionRepository,times(1)).save(any(AdverseAction.class));
+        verify(reportService, Mockito.times(1)).updateAdjudicationDetails(any(AdjudicationUpdationDTO.class));
+        assertEquals("Adverse action created with id 5",actualResult);
+    }
+
+
+    @Test
+    void givenCandidateIdAndAdverseActionDTOAndEmailMetaDataAndMultipartFiles_WhenCreateAdverseActionWithMailAndAttachments_ThenThrowsUserNotFoundException() throws CandidateNotFoundException {
+
+        MultipartFile file1 = new MockMultipartFile("files", "test1.txt", "text/plain", "Dummy file content 1".getBytes(StandardCharsets.UTF_8));
+        MultipartFile file2 = new MockMultipartFile("files", "test2.txt", "text/plain", "Dummy file content 2".getBytes(StandardCharsets.UTF_8));
+        MultipartFile[] files=new MultipartFile[]{file1,file2};
+
+        EmailMetaData emailMetaData=new EmailMetaData(3L,2L,"Pre-adverse action notice","<!DOCTYPE html><html lang=\\\"en\\\"><head><meta charset=\\\"UTF-8\\\"><meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1.0\\\"><title>Pre Adverse Action Notice</title><style>body{font-family:Arial,sans-serif;margin:40px;line-height:1.6;}.container{max-width:600px;padding:20px;border:1px solid #ccc;border-radius:8px;}.checkbox-group{margin:20px 0;}</style></head><body><div class=\\\"container\\\"><p>Dear Jay,</p><p>You recently authorized checkr-bpo (\\\"the company\\\") to obtain consumer reports and/or investigate consumer reports about you from a consumer reporting agency. The Company is considering taking action in whole or in part based on information in such report(s) including the following specific items identified in the report prepared by Checkr, Inc.</p><h3>Select The Charges For The Pre Adverse Action</h3><div class=\\\"checkbox-group\\\"><input type=\\\"checkbox\\\" id=\\\"charge1\\\"><label for=\\\"charge1\\\">Driving while license suspended</label><br><input type=\\\"checkbox\\\" id=\\\"charge2\\\"><label for=\\\"charge2\\\">Assault Domestic Violence</label><br><input type=\\\"checkbox\\\" id=\\\"charge3\\\"><label for=\\\"charge3\\\">Unable to verify employment history at Dunder Mifflin</label></div>");
+
+
+        when(candidateService.getReportIdByCandidateId(anyLong())).thenReturn(2L);
+        when(candidateService.getReferenceByCandidateId(anyLong())).thenReturn(candidate);
+        when(userService.getUserReferenceById(anyLong())).thenReturn(null);
+
+        assertThrows(UserNotFoundException.class,()->adverseActionService.createAdverseActionWithMailAndAttachments(3L,adverseActionDTO,emailMetaData,files));
+
+    }
 
 }

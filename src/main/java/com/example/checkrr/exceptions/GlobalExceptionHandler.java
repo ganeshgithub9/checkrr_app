@@ -1,5 +1,6 @@
 package com.example.checkrr.exceptions;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.UnexpectedTypeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,16 +25,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors,HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler({CandidateNotFoundException.class,ReportNotFoundException.class, CourtSearchNotFoundException.class})
+    @ExceptionHandler({UserNotFoundException.class, CandidateNotFoundException.class,ReportNotFoundException.class, CourtSearchNotFoundException.class})
     public ResponseEntity<String> handleNotFoundExceptions(Exception ex) {
         return new ResponseEntity<>(ex.getMessage(),HttpStatus.NOT_FOUND);
     }
 
 
-    @ExceptionHandler(value={DateTimeParseException.class})
+    @ExceptionHandler(value={DateTimeParseException.class, JsonProcessingException.class,FileUploadFailedException.class})
     public ResponseEntity<String> handleBadRequestExceptions(Exception ex) {
         return new ResponseEntity<>(ex.getMessage(),HttpStatus.BAD_REQUEST);
     }
+
+
 
     @ExceptionHandler(value={SQLException.class, UnexpectedTypeException.class})
     public ResponseEntity<String> handleInternalServerErrorExceptions(Exception ex) {

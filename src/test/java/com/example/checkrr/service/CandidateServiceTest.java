@@ -136,6 +136,15 @@ class CandidateServiceTest {
     }
 
     @Test
+    void givenInvalidCandidateId_WhenGetCandidateGeneralInfoById_ThenThrowsCandidateNotFoundException()  {
+
+        when(candidateRepository.findCandidateGeneralInfoById(anyLong())).thenReturn(Optional.empty());
+
+        assertThrows(CandidateNotFoundException.class,()->candidateService.getCandidateGeneralInfoById(3L));
+
+    }
+
+    @Test
     void givenCandidateId_WhenGetReportByCandidateId_ThenReturnsReportDTO() throws ReportNotFoundException {
 
         when(candidateRepository.findReportByCandidateId(anyLong())).thenReturn(Optional.of(reportDTO));
@@ -143,6 +152,14 @@ class CandidateServiceTest {
         ReportDTO actualResult=candidateService.getReportByCandidateId(3L);
         assertNotNull(actualResult);
         assert(actualResult.equals(reportDTO));
+    }
+
+    @Test
+    void givenInvalidCandidateId_WhenGetReportByCandidateId_ThenThrowsReportNotFoundException()  {
+
+        when(candidateRepository.findReportByCandidateId(anyLong())).thenReturn(Optional.empty());
+
+        assertThrows(ReportNotFoundException.class,()->candidateService.getReportByCandidateId(3L));
     }
 
     @Test
@@ -155,6 +172,8 @@ class CandidateServiceTest {
         assert(actualResult.equals(candidate));
     }
 
+
+
     @Test
     void givenCandidateId_WhenGetReportIdByCandidateId_ThenReturnsReportId() throws CandidateNotFoundException {
 
@@ -164,6 +183,14 @@ class CandidateServiceTest {
         assertNotNull(actualResult);
         assertEquals(3L,actualResult);
         assert(actualResult.equals(3L));
+    }
+
+    @Test
+    void givenInvalidCandidateId_WhenGetReportIdByCandidateId_ThenThrowsReportNotFoundException()  {
+
+        when(candidateRepository.findReportIdById(anyLong())).thenReturn(Optional.empty());
+
+        assertThrows(CandidateNotFoundException.class,()->candidateService.getReportIdByCandidateId(3L));
     }
 
     @Test

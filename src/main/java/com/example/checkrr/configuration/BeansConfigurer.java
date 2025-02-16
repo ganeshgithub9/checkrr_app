@@ -9,6 +9,7 @@ import com.example.checkrr.entity.Report;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.modelmapper.Condition;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeMap;
@@ -36,6 +37,13 @@ public class BeansConfigurer {
             mapping.map(report -> report.getCandidate().getLocation(),CandidateWithReportDTO::setLocation);
         });
         return mapper;
+    }
+
+    @Bean
+    public ObjectMapper objectMapper(){
+        ObjectMapper objectMapper=new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        return objectMapper;
     }
 
 }

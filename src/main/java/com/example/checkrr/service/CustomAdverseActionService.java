@@ -3,12 +3,17 @@ package com.example.checkrr.service;
 import com.example.checkrr.dto.AdjudicationUpdationDTO;
 import com.example.checkrr.dto.AdverseActionDTO;
 import com.example.checkrr.dto.AdverseActionResponseDTO;
+import com.example.checkrr.dto.EmailMetaData;
 import com.example.checkrr.entity.AdverseAction;
 import com.example.checkrr.entity.Candidate;
+import com.example.checkrr.entity.User;
 import com.example.checkrr.enums.AdverseActionStatus;
 import com.example.checkrr.exceptions.CandidateNotFoundException;
+import com.example.checkrr.exceptions.FileUploadFailedException;
+import com.example.checkrr.exceptions.UserNotFoundException;
 import com.example.checkrr.repository.AdverseActionRepository;
 import com.example.checkrr.specifications.AdverseActionSpecification;
+import com.example.checkrr.util.AttachmentUtil;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,24 +22,31 @@ import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CustomAdverseActionService implements AdverseActionService{
 
     CandidateService candidateService;
+    UserService userService;
     ReportService reportService;
     AdverseActionRepository repository;
     private final ModelMapper modelMapper;
+    AttachmentUtil attachmentUtil;
 
-    CustomAdverseActionService(@Autowired CandidateService candidateService,@Autowired ReportService reportService,@Autowired AdverseActionRepository repository,
-                               ModelMapper modelMapper){
+    CustomAdverseActionService(@Autowired CandidateService candidateService,@Autowired UserService userService,@Autowired ReportService reportService,@Autowired AdverseActionRepository repository,
+                               ModelMapper modelMapper, @Autowired AttachmentUtil attachmentUtil){
         this.candidateService=candidateService;
+        this.userService=userService;
         this.reportService=reportService;
         this.repository=repository;
         this.modelMapper = modelMapper;
+        this.attachmentUtil=attachmentUtil;
     }
 
     @Transactional
@@ -61,6 +73,33 @@ public class CustomAdverseActionService implements AdverseActionService{
 
         Page<AdverseAction> pageOfAdverseActions=repository.findAll(adverseActionSpecification,pageable);
         return pageOfAdverseActions.map(adverseAction -> modelMapper.map(adverseAction, AdverseActionResponseDTO.class));
+    }
+
+    @Transactional
+    @Override
+    public String createAdverseActionWithMailAndAttachments(Long candidateId, AdverseActionDTO adverseActionDTO, EmailMetaData emailMetaData, MultipartFile[] files) throws CandidateNotFoundException, UserNotFoundException, FileUploadFailedException {
+        Long reportId=candidateService.getReportIdByCandidateId(candidateId);
+        Candidate candidate=candidateService.getReferenceByCandidateId(candidateId);
+        User user= Optional.ofNullable(userService.getUserReferenceById(emailMetaData.getSenderId())).orElseThrow(()->new UserNotFoundException("User with id "+emailMetaData.getSenderId()+" does not exist"));
+        LocalDate today=LocalDate.now();
+
+        List<String> attachmentUrls= attachmentUtil.storeAttachmentAndGetURLs(files,candidateId);
+
+
+        AdverseAction adverseAction=new AdverseAction();
+        adverseAction.setStatus(AdverseActionStatus.SCHEDULED);
+        adverseAction.setPreNoticeDate(today);
+        adverseAction.setPostNoticeDate(today.plusDays(adverseActionDTO.getNoticeDays()));
+        adverseAction.setCandidate(candidate);
+        adverseAction.setMailSubject(emailMetaData.getSubject());
+        adverseAction.setMailContentInHtml(emailMetaData.getBodyInHtml());
+        adverseAction.setCreatedBy(user);
+        adverseAction.setAttachments(attachmentUrls);
+        AdverseAction adverseAction1=repository.save(adverseAction);
+        AdjudicationUpdationDTO adjudicationUpdationDTO=toAdjudicationUpdationDTO(reportId,adverseActionDTO);
+        reportService.updateAdjudicationDetails(adjudicationUpdationDTO);
+
+        return "Adverse action created with id "+adverseAction1.getId();
     }
 
     AdjudicationUpdationDTO toAdjudicationUpdationDTO(Long reportId,AdverseActionDTO adverseActionDTO){
