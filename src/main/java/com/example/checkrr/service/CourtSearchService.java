@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 public interface CourtSearchService {
-    String createCourtSearch(Long candidateId, CourtSearchDTO courtSearchDTO) throws SQLException;
+    Long createCourtSearch(Long candidateId, CourtSearchDTO courtSearchDTO) throws SQLException;
 
     List<CourtSearchProjection> getCourtSearchDetailsByCandidateId(Long candidateId) throws CourtSearchNotFoundException;
 }

@@ -14,7 +14,10 @@ import com.example.checkrr.exceptions.UserNotFoundException;
 import com.example.checkrr.repository.AdverseActionRepository;
 import com.example.checkrr.specifications.AdverseActionSpecification;
 import com.example.checkrr.util.AttachmentUtil;
+import com.example.checkrr.util.EmailUtil;
+import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,11 +27,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class CustomAdverseActionService implements AdverseActionService{
 
@@ -38,34 +41,19 @@ public class CustomAdverseActionService implements AdverseActionService{
     AdverseActionRepository repository;
     private final ModelMapper modelMapper;
     AttachmentUtil attachmentUtil;
+    EmailUtil emailUtil;
 
     CustomAdverseActionService(@Autowired CandidateService candidateService,@Autowired UserService userService,@Autowired ReportService reportService,@Autowired AdverseActionRepository repository,
-                               ModelMapper modelMapper, @Autowired AttachmentUtil attachmentUtil){
+                               ModelMapper modelMapper, @Autowired AttachmentUtil attachmentUtil,@Autowired EmailUtil emailUtil){
         this.candidateService=candidateService;
         this.userService=userService;
         this.reportService=reportService;
         this.repository=repository;
         this.modelMapper = modelMapper;
         this.attachmentUtil=attachmentUtil;
+        this.emailUtil=emailUtil;
     }
 
-    @Transactional
-    @Override
-    public String createAdverseAction(Long candidateId,AdverseActionDTO adverseActionDTO) throws CandidateNotFoundException, SQLException {
-        Long reportId=candidateService.getReportIdByCandidateId(candidateId);
-        Candidate candidate=candidateService.getReferenceByCandidateId(candidateId);
-
-        LocalDate today=LocalDate.now();
-        AdverseAction adverseAction=new AdverseAction();
-        adverseAction.setStatus(AdverseActionStatus.SCHEDULED);
-        adverseAction.setPreNoticeDate(today);
-        adverseAction.setPostNoticeDate(today.plusDays(adverseActionDTO.getNoticeDays()));
-        adverseAction.setCandidate(candidate);
-        AdverseAction adverseAction1=repository.save(adverseAction);
-        AdjudicationUpdationDTO adjudicationUpdationDTO=toAdjudicationUpdationDTO(reportId,adverseActionDTO);
-        reportService.updateAdjudicationDetails(adjudicationUpdationDTO);
-        return "Adverse action created with id "+adverseAction1.getId();
-    }
 
     @Override
     public Page<AdverseActionResponseDTO> getAdverseActions(String name, AdverseActionStatus status, Pageable pageable) {
@@ -77,7 +65,7 @@ public class CustomAdverseActionService implements AdverseActionService{
 
     @Transactional
     @Override
-    public String createAdverseActionWithMailAndAttachments(Long candidateId, AdverseActionDTO adverseActionDTO, EmailMetaData emailMetaData, MultipartFile[] files) throws CandidateNotFoundException, UserNotFoundException, FileUploadFailedException {
+    public Long createAdverseActionWithMailAndAttachments(Long candidateId, AdverseActionDTO adverseActionDTO, EmailMetaData emailMetaData, MultipartFile[] files) throws CandidateNotFoundException, UserNotFoundException, FileUploadFailedException, MessagingException {
         Long reportId=candidateService.getReportIdByCandidateId(candidateId);
         Candidate candidate=candidateService.getReferenceByCandidateId(candidateId);
         User user= Optional.ofNullable(userService.getUserReferenceById(emailMetaData.getSenderId())).orElseThrow(()->new UserNotFoundException("User with id "+emailMetaData.getSenderId()+" does not exist"));
@@ -85,21 +73,21 @@ public class CustomAdverseActionService implements AdverseActionService{
 
         List<String> attachmentUrls= attachmentUtil.storeAttachmentAndGetURLs(files,candidateId);
 
+        AdverseAction adverseAction=new AdverseAction(null,today,today.plusDays(adverseActionDTO.getNoticeDays()),candidate,AdverseActionStatus.SCHEDULED,emailMetaData.getSubject(),emailMetaData.getBodyInHtml(),user,attachmentUrls);
 
-        AdverseAction adverseAction=new AdverseAction();
-        adverseAction.setStatus(AdverseActionStatus.SCHEDULED);
-        adverseAction.setPreNoticeDate(today);
-        adverseAction.setPostNoticeDate(today.plusDays(adverseActionDTO.getNoticeDays()));
-        adverseAction.setCandidate(candidate);
-        adverseAction.setMailSubject(emailMetaData.getSubject());
-        adverseAction.setMailContentInHtml(emailMetaData.getBodyInHtml());
-        adverseAction.setCreatedBy(user);
-        adverseAction.setAttachments(attachmentUrls);
         AdverseAction adverseAction1=repository.save(adverseAction);
+
+        log.info("Created an adverse action with  id {} for candidate {}",adverseAction1.getId(),adverseAction1.getCandidate().getName());
+
         AdjudicationUpdationDTO adjudicationUpdationDTO=toAdjudicationUpdationDTO(reportId,adverseActionDTO);
+
         reportService.updateAdjudicationDetails(adjudicationUpdationDTO);
 
-        return "Adverse action created with id "+adverseAction1.getId();
+        String userMailId=userService.getEmailById(emailMetaData.getSenderId());
+        String candidateMailId=candidateService.getEmailById(candidateId);
+
+        emailUtil.sendMailWithAttachments(userMailId,candidateMailId,emailMetaData.getSubject(),emailMetaData.getBodyInHtml(),files);
+        return adverseAction1.getId();
     }
 
     AdjudicationUpdationDTO toAdjudicationUpdationDTO(Long reportId,AdverseActionDTO adverseActionDTO){

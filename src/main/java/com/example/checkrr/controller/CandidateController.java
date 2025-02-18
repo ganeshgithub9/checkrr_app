@@ -23,7 +23,8 @@ public class CandidateController {
 
     @PostMapping
     public ResponseEntity<String> createCandidate(@Valid @RequestBody CandidateDTO request) throws SQLException {
-        return new ResponseEntity<>(candidateService.createCandidate(request), HttpStatus.CREATED);
+        Long candidateId=candidateService.createCandidate(request);
+        return new ResponseEntity<>("Created a candidate with id "+candidateId, HttpStatus.CREATED);
     }
 
     @GetMapping("/{candidate-id}")

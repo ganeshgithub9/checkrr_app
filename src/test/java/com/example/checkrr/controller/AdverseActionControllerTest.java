@@ -6,7 +6,6 @@ import com.example.checkrr.dto.EmailMetaData;
 import com.example.checkrr.enums.AdverseActionStatus;
 import com.example.checkrr.service.AdverseActionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -45,23 +44,6 @@ class AdverseActionControllerTest {
     @MockitoBean
     AdverseActionService adverseActionService;
 
-    @Test
-    void givenValidCandidateIdAndAdverseActionDTO_WhenCreateAdverseAction_ThenReturnsSuccessResponse() throws Exception{
-
-        String body=new JSONObject()
-                .put( "adjudication","ENGAGE")
-                .put("status","CLEAR")
-                .put("noticeDays", 5).toString();
-        when(adverseActionService.createAdverseAction(anyLong(),any(AdverseActionDTO.class))).thenReturn("Adverse action created with id 9");
-
-        mockMvc.perform(post("/api/v1/candidates/{candidate-id}/adverse-actions",9)
-                        .content(body)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(content().string("Adverse action created with id 9"));
-    }
 
     @Test
     void given_Name_Status_PageableObject_WhenGetAdverseActions_ThenReturnsAPageOfAdverseActionResponseDTOs() throws Exception {
@@ -98,9 +80,9 @@ class AdverseActionControllerTest {
         MockMultipartFile adjudicationDataMultipartFile = new MockMultipartFile("adjudicationData", "", MediaType.APPLICATION_JSON_VALUE, adjudicationJson.getBytes(StandardCharsets.UTF_8));
 
 
-        when(adverseActionService.createAdverseActionWithMailAndAttachments(anyLong(),any(AdverseActionDTO.class),any(EmailMetaData.class),any(MultipartFile[].class))).thenReturn("Adverse action created with id 9");
+        when(adverseActionService.createAdverseActionWithMailAndAttachments(anyLong(),any(AdverseActionDTO.class),any(EmailMetaData.class),any(MultipartFile[].class))).thenReturn(9L);
 
-        mockMvc.perform(multipart("/api/v2/candidates/{candidate-id}/adverse-actions",9)
+        mockMvc.perform(multipart("/api/v1/candidates/{candidate-id}/adverse-actions",9)
                         .file(file1)
                         .file(file2)
                         .file(emailMetaDataMultipartFile)

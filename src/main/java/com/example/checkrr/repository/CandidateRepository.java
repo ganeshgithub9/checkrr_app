@@ -22,4 +22,7 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long>, Jpa
 
      @Query(value = "select report_id from candidate where id= :candidateId",nativeQuery = true)
      Optional<Long> findReportIdById(Long candidateId);
+
+     @Query("select c.email from Candidate c where c.id=:id")
+     String findEmailById(@Param("id") Long candidateId);
 }

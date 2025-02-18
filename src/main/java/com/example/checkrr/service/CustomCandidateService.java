@@ -8,16 +8,15 @@ import com.example.checkrr.exceptions.CandidateNotFoundException;
 import com.example.checkrr.exceptions.ReportNotFoundException;
 import com.example.checkrr.projection.CandidateGeneralInfoProjection;
 import com.example.checkrr.repository.CandidateRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
 
-
+@Slf4j
 @Service
 public class CustomCandidateService implements CandidateService{
 
@@ -28,13 +27,14 @@ public class CustomCandidateService implements CandidateService{
         this.repository=repository;
     }
     @Override
-    public String createCandidate(CandidateDTO request) throws SQLException {
+    public Long createCandidate(CandidateDTO request) throws SQLException {
         Candidate candidate=toCandidate(request);
         Report report=new Report();
         candidate.setReport(report);
         candidate.setCreatedAt(LocalDate.now());
         candidate=repository.save(candidate);
-        return "Created a candidate with id "+candidate.getId();
+        log.info("Created a candidate named {} with id {}",candidate.getName(),candidate.getId());
+        return candidate.getId();
     }
 
     @Override
@@ -55,6 +55,11 @@ public class CustomCandidateService implements CandidateService{
     @Override
     public Long getReportIdByCandidateId(Long candidateId) throws CandidateNotFoundException {
         return repository.findReportIdById(candidateId).orElseThrow(()->new CandidateNotFoundException("Candidate with id "+candidateId+" does not exist"));
+    }
+
+    @Override
+    public String getEmailById(Long candidateId) {
+        return repository.findEmailById(candidateId);
     }
 
 

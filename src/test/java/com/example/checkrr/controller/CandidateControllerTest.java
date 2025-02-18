@@ -158,7 +158,7 @@ class CandidateControllerTest {
                 .put("phone","1234567899").put("socialSecurityNumber","1234321")
                 .put("zipcode",121212).toString();
 
-        when(candidateService.createCandidate(any(CandidateDTO.class))).thenReturn("Created a candidate with id 9");
+        when(candidateService.createCandidate(any(CandidateDTO.class))).thenReturn(9L);
 
         mockMvc.perform(post("/api/v1/candidates")
                         .content(body)

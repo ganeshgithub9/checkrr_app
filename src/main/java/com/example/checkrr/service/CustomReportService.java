@@ -8,6 +8,7 @@ import com.example.checkrr.enums.Adjudication;
 import com.example.checkrr.enums.Status;
 import com.example.checkrr.repository.ReportRepository;
 import com.example.checkrr.specifications.ReportSpecification;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,7 +17,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+@Slf4j
 @Service
 public class CustomReportService implements ReportService{
 
@@ -35,7 +36,8 @@ public class CustomReportService implements ReportService{
 
     @Override
     public void saveReport(Report report) {
-        repository.save(report);
+        Report report1=repository.save(report);
+        log.info("Report created with id {} for candidate id {}",report1.getId(),report1.getCandidate().getId());
     }
 
     @Override

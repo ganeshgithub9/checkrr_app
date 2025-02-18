@@ -120,8 +120,8 @@ class CandidateServiceTest {
 
         when(candidateRepository.save(any(Candidate.class))).thenReturn(candidate);
         when(modelMapper.map(candidateDTO, Candidate.class)).thenReturn(candidate);
-        String actualResult=candidateService.createCandidate(candidateDTO);
-        assertEquals("Created a candidate with id 2",actualResult);
+        Long actualResult=candidateService.createCandidate(candidateDTO);
+        assertEquals(2,actualResult);
     }
 
     @Test
@@ -213,6 +213,16 @@ class CandidateServiceTest {
         assertNotNull(actualResult);
         assert(actualResult.equals(candidateDTO));
         assert(actualResult.getName().equals(candidate.getName()));
+    }
+
+    @Test
+    void givenCandidateId_WhenGetEmailById_ThenReturnsCandidateEmailId(){
+        String expectedEmailId="abc@abc.com";
+        when(candidateRepository.findEmailById(anyLong())).thenReturn(expectedEmailId);
+
+        String actualEmailId=candidateService.getEmailById(4L);
+
+        assertEquals(expectedEmailId,actualEmailId);
     }
 
 }

@@ -15,9 +15,11 @@ import com.example.checkrr.exceptions.FileUploadFailedException;
 import com.example.checkrr.exceptions.UserNotFoundException;
 import com.example.checkrr.repository.AdverseActionRepository;
 import com.example.checkrr.util.AttachmentUtil;
+import com.example.checkrr.util.EmailUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.mail.MessagingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -36,7 +38,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -64,6 +65,8 @@ class AdverseActionServiceTest {
     @Mock
     AdverseActionRepository adverseActionRepository;
 
+    @Mock
+    EmailUtil emailUtil;
 
 
     @InjectMocks
@@ -132,19 +135,6 @@ class AdverseActionServiceTest {
 
     }
 
-    @Test
-    void givenCandidateIdAndAdverseActionDTO_WhenCreateAdverseAction_ThenReturnsSuccessResponse() throws SQLException, CandidateNotFoundException {
-
-        when(candidateService.getReportIdByCandidateId(3L)).thenReturn(2L);
-        when(candidateService.getReferenceByCandidateId(3L)).thenReturn(candidate);
-        when(adverseActionRepository.save(any(AdverseAction.class))).thenReturn(adverseAction);
-        when(reportService.updateAdjudicationDetails(any(AdjudicationUpdationDTO.class))).thenReturn(1);
-
-        String actualResult= adverseActionService.createAdverseAction(3L,adverseActionDTO);
-
-        verify(reportService, Mockito.times(1)).updateAdjudicationDetails(any(AdjudicationUpdationDTO.class));
-        assertEquals("Adverse action created with id 5",actualResult);
-    }
 
     @Test
     void givenReportIdAndAdverseActionDTO_WhenToAdjudicationUpdationDTO_ThenReturnsAdjudicationUpdationDTO(){
@@ -172,7 +162,7 @@ class AdverseActionServiceTest {
     }
 
     @Test
-    void givenCandidateIdAndAdverseActionDTOAndEmailMetaDataAndMultipartFiles_WhenCreateAdverseActionWithMailAndAttachments_ThenReturnsSuccessResponse() throws CandidateNotFoundException, FileUploadFailedException, UserNotFoundException {
+    void givenCandidateIdAndAdverseActionDTOAndEmailMetaDataAndMultipartFiles_WhenCreateAdverseActionWithMailAndAttachments_ThenReturnsSuccessResponse() throws CandidateNotFoundException, FileUploadFailedException, UserNotFoundException, MessagingException {
 
         List<String> urlsList=List.of("/home/ganeb/uploads/checkrr/2__test1.txt","/home/ganeb/uploads/checkrr/2__test2.txt");
         MultipartFile file1 = new MockMultipartFile("files", "test1.txt", "text/plain", "Dummy file content 1".getBytes(StandardCharsets.UTF_8));
@@ -188,12 +178,13 @@ class AdverseActionServiceTest {
         when(attachmentUtil.storeAttachmentAndGetURLs(any(MultipartFile[].class),anyLong())).thenReturn(urlsList);
         when(adverseActionRepository.save(any(AdverseAction.class))).thenReturn(adverseAction);
         when(reportService.updateAdjudicationDetails(any(AdjudicationUpdationDTO.class))).thenReturn(1);
+        doNothing().when(emailUtil).sendMailWithAttachments(anyString(),anyString(),anyString(),anyString(),any(MultipartFile[].class));
 
-        String actualResult= adverseActionService.createAdverseActionWithMailAndAttachments(3L,adverseActionDTO,emailMetaData,files);
+        Long actualResult= adverseActionService.createAdverseActionWithMailAndAttachments(3L,adverseActionDTO,emailMetaData,files);
 
         verify(adverseActionRepository,times(1)).save(any(AdverseAction.class));
         verify(reportService, Mockito.times(1)).updateAdjudicationDetails(any(AdjudicationUpdationDTO.class));
-        assertEquals("Adverse action created with id 5",actualResult);
+        assertEquals(5,actualResult);
     }
 
 

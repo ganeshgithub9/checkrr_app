@@ -60,6 +60,14 @@ class AttachmentUtilTest {
         }
     }
 
+    @Test
+    void givenNoFiles_WhenStoreAttachmentAndGetURLs_ThenReturnsEmptyURLsList() throws FileUploadFailedException {
+        files=null;
+        List<String> urlsList=attachmentUtil.storeAttachmentAndGetURLs(files,2L);
+
+        assertEquals(0,urlsList.size());
+    }
+
 
     @Test
     void givenFiles_WhenStoreAttachmentAndGetURLs_ThenThrowsFileUploadFailedException() {
@@ -82,4 +90,5 @@ class AttachmentUtilTest {
             throw new RuntimeException(e.getMessage());
         }
     }
+
 }

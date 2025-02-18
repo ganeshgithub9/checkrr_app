@@ -78,7 +78,7 @@ class CourtSearchControllerTest {
         String body=new JSONObject()
                 .put( "name","Global Watchlist")
                 .put("status","CONSIDER").toString();
-        when(courtSearchService.createCourtSearch(anyLong(),any(CourtSearchDTO.class))).thenReturn("Created CourtSearch with id 9");
+        when(courtSearchService.createCourtSearch(anyLong(),any(CourtSearchDTO.class))).thenReturn(9L);
 
         mockMvc.perform(post("/api/v1/candidates/{candidate-id}/court-searches",9)
                         .content(body)

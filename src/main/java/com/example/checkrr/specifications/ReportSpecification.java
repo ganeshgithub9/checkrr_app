@@ -7,7 +7,6 @@ import com.example.checkrr.enums.Adjudication;
 import com.example.checkrr.enums.Status;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 

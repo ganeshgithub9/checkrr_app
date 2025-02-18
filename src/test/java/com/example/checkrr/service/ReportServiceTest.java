@@ -4,6 +4,7 @@ package com.example.checkrr.service;
 import com.example.checkrr.dto.AdjudicationUpdationDTO;
 import com.example.checkrr.dto.CandidateWithReportDTO;
 import com.example.checkrr.dto.ExportDTO;
+import com.example.checkrr.entity.Candidate;
 import com.example.checkrr.entity.Report;
 import com.example.checkrr.enums.Adjudication;
 import com.example.checkrr.enums.Status;
@@ -66,12 +67,15 @@ class ReportServiceTest {
         objectMapper.registerModule(new JavaTimeModule());
 
         openMocks(this);
+
+        Candidate candidate=new Candidate();candidate.setId(5L);
         report=new Report();
         report.setAdjudicationStatus(Status.CONSIDER);
         report.setId(4L);
         report.setAdjudication(Adjudication.PRE_ADVERSE_ACTION);
         report.setPackageType("EmployeePRO");
         report.setAdjudicationCreatedAt(LocalDate.now());
+        report.setCandidate(candidate);
 
         adjudicationUpdationDTO=new AdjudicationUpdationDTO();
         adjudicationUpdationDTO.setReportId(3L);
@@ -96,6 +100,8 @@ class ReportServiceTest {
 
     @Test
     void givenReport_WhenSaveReport_thenReturnsSuccessResponse(){
+        when(reportRepository.save(any(Report.class))).thenReturn(report);
+
         reportService.saveReport(report);
         verify(reportRepository,times(1)).save(report);
     }

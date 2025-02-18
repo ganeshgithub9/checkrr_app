@@ -18,4 +18,9 @@ public class CustomUserService implements UserService{
     public User getUserReferenceById(Long userId) {
         return repository.getReferenceById(userId);
     }
+
+    @Override
+    public String getEmailById(Long senderId) {
+        return repository.findEmailById(senderId);
+    }
 }

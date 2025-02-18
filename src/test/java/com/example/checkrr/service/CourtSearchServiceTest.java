@@ -95,9 +95,9 @@ class CourtSearchServiceTest {
         when(mapper.map(any(CourtSearchDTO.class), eq(CourtSearch.class))).thenReturn(courtSearch);
         when(courtSearchRepository.save(any(CourtSearch.class))).thenReturn(courtSearch);
 
-        String actualResult=courtSearchService.createCourtSearch(2L,courtSearchDTO);
+        Long actualResult=courtSearchService.createCourtSearch(2L,courtSearchDTO);
 
-        assertEquals("Created CourtSearch with id 5",actualResult);
+        assertEquals(5,actualResult);
 
     }
 

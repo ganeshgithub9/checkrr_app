@@ -10,7 +10,7 @@ import java.sql.SQLException;
 
 
 public interface CandidateService {
-    String createCandidate(CandidateDTO request) throws SQLException;
+    Long createCandidate(CandidateDTO request) throws SQLException;
 
     CandidateDTO getCandidateGeneralInfoById(Long candidateId) throws CandidateNotFoundException;
 
@@ -20,4 +20,5 @@ public interface CandidateService {
 
     Long getReportIdByCandidateId(Long candidateId) throws CandidateNotFoundException;
 
+    String getEmailById(Long candidateId);
 }

@@ -23,7 +23,8 @@ public class CourtSearchController {
     }
     @PostMapping
     public ResponseEntity<String> createCourtSearch(@PathVariable("candidate-id") Long candidateId, @Valid @RequestBody CourtSearchDTO courtSearchDTO) throws SQLException {
-        return new ResponseEntity<>(courtSearchService.createCourtSearch(candidateId,courtSearchDTO), HttpStatus.CREATED);
+        Long courtSearchId=courtSearchService.createCourtSearch(candidateId,courtSearchDTO);
+        return new ResponseEntity<>("Created CourtSearch with id "+courtSearchId, HttpStatus.CREATED);
     }
 
     @GetMapping

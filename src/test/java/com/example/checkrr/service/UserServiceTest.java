@@ -39,4 +39,14 @@ class UserServiceTest {
         assertEquals(user.getEmail(),actualUser.getEmail());
     }
 
+    @Test
+    void givenUserId_WhenGetEmailById_ThenReturnsUserEmailId(){
+        String expectedEmailId="abc@abc.com";
+        when(userRepository.findEmailById(anyLong())).thenReturn(expectedEmailId);
+
+        String actualEmailId=userService.getEmailById(4L);
+
+        assertEquals(expectedEmailId,actualEmailId);
+    }
+
 }

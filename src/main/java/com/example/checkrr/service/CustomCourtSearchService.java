@@ -6,15 +6,15 @@ import com.example.checkrr.entity.CourtSearch;
 import com.example.checkrr.exceptions.CourtSearchNotFoundException;
 import com.example.checkrr.projection.CourtSearchProjection;
 import com.example.checkrr.repository.CourtSearchRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDate;
 import java.util.List;
-
+@Slf4j
 @Service
 public class CustomCourtSearchService implements CourtSearchService{
 
@@ -29,13 +29,14 @@ public class CustomCourtSearchService implements CourtSearchService{
     }
 
     @Override
-    public String createCourtSearch(Long candidateId, CourtSearchDTO courtSearchDTO) throws SQLException {
+    public Long createCourtSearch(Long candidateId, CourtSearchDTO courtSearchDTO) throws SQLException {
         Candidate candidate=candidateService.getReferenceByCandidateId(candidateId);
         CourtSearch courtSearch=mapper.map(courtSearchDTO, CourtSearch.class);
         courtSearch.setCandidate(candidate);
         courtSearch.setReportedAt(LocalDate.now());
         courtSearch=repository.save(courtSearch);
-        return "Created CourtSearch with id "+courtSearch.getId();
+        log.info("Created a court-search with id {} for candidate id {}",courtSearch.getId(),courtSearch.getCandidate().getId());
+        return courtSearch.getId();
     }
 
     @Override
